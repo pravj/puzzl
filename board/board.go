@@ -6,6 +6,7 @@ import (
   "fmt"
   "time"
   "math/rand"
+  "github.com/pravj/puzzl/scanner"
 )
 
 const (
@@ -72,4 +73,6 @@ func (b *Board) arrange() {
       b.rows[i].tiles[j].value = values[3*i + j]
     }
   }
+
+  fmt.Println(scanner.IsLegal(SIZE, values))
 }
