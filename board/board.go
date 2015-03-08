@@ -74,5 +74,9 @@ func (b *Board) arrange() {
     }
   }
 
-  fmt.Println(scanner.IsLegal(SIZE, values))
+  if (scanner.IsLegal(SIZE, values)) {
+    //
+  } else {
+    b.arrange()
+  }
 }
