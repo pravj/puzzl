@@ -2,6 +2,8 @@
 // and its general operations
 package board
 
+// TODO: think on placing things in init()
+
 import (
   "fmt"
   "time"
@@ -28,6 +30,9 @@ type row struct {
 type Board struct {
   size int
   rows [SIZE]row
+
+  blankRow int
+  blankCol int
 }
 
 // Returns a newly created board for the puzzle
@@ -74,9 +79,46 @@ func (b *Board) arrange() {
     }
   }
 
-  if (scanner.IsLegal(SIZE, values)) {
-    //
+  // validity of the configuration and position of blank tile
+  valid, index := scanner.IsLegal(SIZE, values)
+  if (valid) {
+    blankRow, blankCol := position(index)
+    fmt.Println(moves(blankRow, blankCol))
+    // LINK IT FOR FURTHER USE
   } else {
     b.arrange()
   }
+}
+
+// Returns zero-based row and column position for a tile
+func position(index int) (int, int) {
+  return index/3, index%3
+}
+
+// Returns a list of all the possible moves from a given tile position
+// TODO: find any idiomatic thing for this, if any.
+func moves(row, column int) ([]int) {
+  move := make([]int, 8) // 8 because, it can move in maximum 4 directions
+
+  if (column != 0) {
+    move = append(move, row)
+    move = append(move, column-1)
+  }
+
+  if (column != 2) {
+    move = append(move, row)
+    move = append(move, column+1)
+  }
+
+  if (row != 0) {
+    move = append(move, row-1)
+    move = append(move, column)
+  }
+
+  if (row != 2) {
+    move = append(move, row+1)
+    move = append(move, column)
+  }
+
+  return move
 }
