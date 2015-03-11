@@ -3,6 +3,7 @@
 package board
 
 // TODO: think on placing things in init()
+// Just make sure what all things to add there
 
 import (
   "fmt"
@@ -82,12 +83,21 @@ func (b *Board) arrange() {
   // validity of the configuration and position of blank tile
   valid, index := scanner.IsLegal(SIZE, values)
   if (valid) {
-    blankRow, blankCol := position(index)
-    fmt.Println(moves(blankRow, blankCol))
+    b.blankRow, b.blankCol = position(index)
     // LINK IT FOR FURTHER USE
   } else {
     b.arrange()
   }
+}
+
+// Moves the blank from a tile configuration to a given tile
+func (b *Board) move(row, column int) {
+  b.rows[b.blankRow].tiles[b.blankCol].value = b.rows[row].tiles[column].value
+
+  b.blankRow = row
+  b.blankCol = column
+
+  b.rows[b.blankRow].tiles[b.blankCol].value = 0
 }
 
 // Returns zero-based row and column position for a tile
@@ -98,7 +108,7 @@ func position(index int) (int, int) {
 // Returns a list of all the possible moves from a given tile position
 // TODO: find any idiomatic thing for this, if any.
 func moves(row, column int) ([]int) {
-  move := make([]int, 8) // 8 because, it can move in maximum 4 directions
+  var move []int
 
   if (column != 0) {
     move = append(move, row)
