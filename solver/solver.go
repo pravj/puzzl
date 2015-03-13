@@ -1,10 +1,11 @@
-// Package solver implemets auto-solving of the game
+
 package solver
 
 // TODO: init() content
 
 import (
-  "fmt"
+  _ "fmt"
+  "container/heap"
   "github.com/pravj/puzzl/board"
 )
 
@@ -15,6 +16,40 @@ type Node struct {
   gCost int
   hCost int
   fCost int
+
+  index int
+}
+
+type PriorityQueue []Node
+
+func (pq PriorityQueue) Len() int {
+  return len(pq)
+}
+
+func (pq PriorityQueue) Less(i, j int) bool {
+  return pq[i].fCost < pq[j].fCost
+}
+
+func (pq PriorityQueue) Swap(i, j int) {
+  pq[i], pq[j] = pq[j], pq[i]
+  pq[i].index = i
+  pq[j].index = j
+}
+
+func (pq *PriorityQueue) Push(x interface{}) {
+  n := len(*pq)
+  item := x.(Node)
+  item.index = n
+  *pq = append(*pq, item)
+}
+
+func (pq *PriorityQueue) Pop() interface{} {
+  old := *pq
+  n := len(old)
+  item := old[n-1]
+  item.index = -1 // for safety
+  *pq = old[0 : n-1]
+  return item
 }
 
 // What about using linked-list for path tracing?
@@ -24,16 +59,20 @@ type Path struct {
 }
 
 type OpenList struct {
-  nodes map[Node]bool
+  table map[board.Board]bool
+  queue *PriorityQueue
 }
 
 type CloseList struct {
-  nodes map[*Node]bool
+  table map[board.Board]bool
+  queue *PriorityQueue
 }
 
 type Solver struct {
   openlist *OpenList
   closelist *CloseList
+
+  goal board.Board
 }
 
 // implements misplaced tile count as a heuristic scoring function
@@ -51,8 +90,8 @@ func heuristicScore(b board.Board) int {
   return score
 }
 
-// scoring returns scores for a Node used in the progress
-func scoring(node Node, isRoot bool) {
+// scoring updates scores for a Node used in the progress
+func scoring(node *Node, isRoot bool) {
   var g int
   if (!isRoot) {
     g = node.parent.gCost + 1
@@ -69,14 +108,11 @@ func scoring(node Node, isRoot bool) {
 func neighbours(b board.Board) ([]board.Board) {
   var list []board.Board
   moves := b.Moves(b.BlankRow, b.BlankCol)
-  //fmt.Println(moves)
 
   for i := 0; i < len(moves)/2; i++ {
-    var bTemp board.Board
-    bTemp = b
-    //fmt.Println(bTemp)
+    bTemp := b
     bTemp.Move(moves[2*i], moves[2*i+1])
-    //fmt.Println(bTemp)
+
     list = append(list, bTemp)
   }
 
@@ -89,19 +125,67 @@ func New(b board.Board) *Solver {
 
   // initiate the solver with open and close lists
   solver := &Solver{openlist: openlist, closelist: closelist}
-  solver.openlist.nodes = make(map[Node]bool)
-  solver.closelist.nodes = make(map[*Node]bool)
+  solver.openlist.table = make(map[board.Board]bool)
+  solver.closelist.table = make(map[board.Board]bool)
+
+  var opq, cpq PriorityQueue
+  heap.Init(&opq)
+  heap.Init(&cpq)
+
+  solver.openlist.queue = &opq
+  solver.closelist.queue = &cpq
 
   // Node representing the initial configuration of the board
   currentNode := Node{parent: nil, state: b}
   // updates traversal cost values for the node(root)
-  scoring(currentNode, true)
+  scoring(&currentNode, true)
 
   // add initial configuration(root Node) to open list
-  solver.openlist.nodes[currentNode] = true
+  solver.openlist.table[currentNode.state] = true
+  heap.Push(solver.openlist.queue, currentNode)
 
-  fmt.Println("start", currentNode.state)
-  fmt.Println(neighbours(currentNode.state))
+  // generate the default goal state for the process
+  solver.goalState()
 
   return solver
+}
+
+// goalState generates the default goal state
+// TODO: size as a variable(const)
+func (s *Solver) goalState() {
+  b := board.New()
+
+  for i := 0; i < 3; i++ {
+    for j := 0; j < 3; j++ {
+      b.Rows[i].Tiles[j].Value = (3*i+j+1)%9
+    }
+  }
+
+  b.BlankRow, b.BlankCol = 2, 2
+
+  s.goal = *b
+}
+
+func (s *Solver) Solve() {
+  var currentNode Node
+
+  for (s.openlist.queue.Len() > 0) {
+    // remove node index from open list
+    s.openlist.table[currentNode.state] = false
+    currentNode = heap.Pop(s.openlist.queue).(Node)
+
+    // add node index to close list
+    s.closelist.table[currentNode.state] = true
+    heap.Push(s.closelist.queue, currentNode)
+
+    if (currentNode.state == s.goal) {
+      // TODO: termination state
+      break
+    } else {
+      adjacents := neighbours(currentNode.state)
+      for i := 0; i < len(adjacents); i++ {
+        //
+      }
+    }
+  }
 }
