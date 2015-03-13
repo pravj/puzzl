@@ -6,7 +6,7 @@ package board
 // Just make sure what all things to add there
 
 import (
-  "fmt"
+  _ "fmt"
   "time"
   "math/rand"
   "github.com/pravj/puzzl/scanner"
@@ -18,22 +18,22 @@ const (
 
 // Tile represents a tile in the puzzle board
 type tile struct {
-  value int
+  Value int
 }
 
 // Row represents a row(list) of tiles in the puzzle board
 type row struct {
   size int
-  tiles [SIZE]tile
+  Tiles [SIZE]tile
 }
 
 // N*N size square puzzle board
 type Board struct {
   size int
-  rows [SIZE]row
+  Rows [SIZE]row
 
-  blankRow int
-  blankCol int
+  BlankRow int
+  BlankCol int
 }
 
 // Returns a newly created board for the puzzle
@@ -55,15 +55,15 @@ func (b *Board) initiate() {
     var tiles [SIZE]tile
 
     for j := 0; j < b.size; j++ {
-      t := tile{value: 0}
+      t := tile{Value: 0}
       tiles[j] = t
     }
 
-    r.tiles = tiles
+    r.Tiles = tiles
     rows[i] = r
   }
 
-  b.rows = rows
+  b.Rows = rows
 }
 
 // Arrange all the tiles in a given order
@@ -76,14 +76,14 @@ func (b *Board) arrange() {
 
   for i := 0; i < SIZE; i++ {
     for j := 0; j < SIZE; j++ {
-      b.rows[i].tiles[j].value = values[3*i + j]
+      b.Rows[i].Tiles[j].Value = values[3*i + j]
     }
   }
 
   // validity of the configuration and position of blank tile
   valid, index := scanner.IsLegal(SIZE, values)
   if (valid) {
-    b.blankRow, b.blankCol = position(index)
+    b.BlankRow, b.BlankCol = position(index)
     // LINK IT FOR FURTHER USE
   } else {
     b.arrange()
@@ -91,13 +91,13 @@ func (b *Board) arrange() {
 }
 
 // Moves the blank from a tile configuration to a given tile
-func (b *Board) move(row, column int) {
-  b.rows[b.blankRow].tiles[b.blankCol].value = b.rows[row].tiles[column].value
+func (b *Board) Move(row, column int) {
+  b.Rows[b.BlankRow].Tiles[b.BlankCol].Value = b.Rows[row].Tiles[column].Value
 
-  b.blankRow = row
-  b.blankCol = column
+  b.BlankRow = row
+  b.BlankCol = column
 
-  b.rows[b.blankRow].tiles[b.blankCol].value = 0
+  b.Rows[b.BlankRow].Tiles[b.BlankCol].Value = 0
 }
 
 // Returns zero-based row and column position for a tile
@@ -107,7 +107,7 @@ func position(index int) (int, int) {
 
 // Returns a list of all the possible moves from a given tile position
 // TODO: find any idiomatic thing for this, if any.
-func moves(row, column int) ([]int) {
+func (b *Board) Moves(row, column int) ([]int) {
   var move []int
 
   if (column != 0) {
