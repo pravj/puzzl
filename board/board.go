@@ -1,4 +1,4 @@
-// Package board represents a square puzzle board
+// Package board represents a square zupple board
 // and its general operations
 package board
 
@@ -6,28 +6,27 @@ package board
 // Just make sure what all things to add there
 
 import (
-  _ "fmt"
   "time"
   "math/rand"
   "github.com/pravj/puzzl/scanner"
 )
 
 const (
-  SIZE int = 3 // size of the puzzle board(fixed though)
+  SIZE int = 3 // size of the zupple board(fixed though)
 )
 
-// Tile represents a tile in the puzzle board
+// Tile represents a tile in the zupple board
 type tile struct {
   Value int
 }
 
-// Row represents a row(list) of tiles in the puzzle board
+// Row represents a row(list) of tiles in the zupple board
 type row struct {
   size int
   Tiles [SIZE]tile
 }
 
-// N*N size square puzzle board
+// N*N size square zupple board
 type Board struct {
   size int
   Rows [SIZE]row
@@ -36,7 +35,7 @@ type Board struct {
   BlankCol int
 }
 
-// Returns a newly created board for the puzzle
+// Returns a newly created board for the zupple
 func New() *Board {
   board := &Board{size: SIZE}
 
@@ -73,6 +72,8 @@ func (b *Board) arrange() {
 
   // slice of integer values randomly distributed
   values := r.Perm(SIZE*SIZE)
+  //values := []int{8,6,7,2,5,4,3,0,1} // hard
+  //values := []int{2,5,3,1,0,6,4,7,8} // easy
 
   for i := 0; i < SIZE; i++ {
     for j := 0; j < SIZE; j++ {

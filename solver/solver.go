@@ -1,10 +1,10 @@
-
+// Package solver implements auto-solving for any configuration
 package solver
 
 // TODO: init() content
 
 import (
-  _ "fmt"
+  "fmt"
   "container/heap"
   "github.com/pravj/puzzl/board"
 )
@@ -52,20 +52,15 @@ func (pq *PriorityQueue) Pop() interface{} {
   return item
 }
 
-// What about using linked-list for path tracing?
-// whatever you do, make sure to think about memory of supporting data types
-type Path struct {
-  nodes []Node
-}
-
 type OpenList struct {
+  nodeTable map[board.Board]Node
   table map[board.Board]bool
+
   queue *PriorityQueue
 }
 
 type CloseList struct {
   table map[board.Board]bool
-  queue *PriorityQueue
 }
 
 type Solver struct {
@@ -73,6 +68,7 @@ type Solver struct {
   closelist *CloseList
 
   goal board.Board
+  path map[board.Board]board.Board
 }
 
 // implements misplaced tile count as a heuristic scoring function
@@ -119,30 +115,32 @@ func neighbours(b board.Board) ([]board.Board) {
   return list
 }
 
-func New(b board.Board) *Solver {
+func New(b *board.Board) *Solver {
   openlist := &OpenList{}
   closelist := &CloseList{}
 
   // initiate the solver with open and close lists
   solver := &Solver{openlist: openlist, closelist: closelist}
+  solver.openlist.nodeTable = make(map[board.Board]Node)
   solver.openlist.table = make(map[board.Board]bool)
   solver.closelist.table = make(map[board.Board]bool)
+  solver.path = make(map[board.Board]board.Board)
 
-  var opq, cpq PriorityQueue
+  var opq PriorityQueue
   heap.Init(&opq)
-  heap.Init(&cpq)
 
   solver.openlist.queue = &opq
-  solver.closelist.queue = &cpq
+  fmt.Println("starting state ", *b, "\n")
 
   // Node representing the initial configuration of the board
-  currentNode := Node{parent: nil, state: b}
+  currentNode := &Node{parent: nil, state: *b}
   // updates traversal cost values for the node(root)
-  scoring(&currentNode, true)
+  scoring(currentNode, true)
 
   // add initial configuration(root Node) to open list
+  solver.openlist.nodeTable[currentNode.state] = *currentNode
   solver.openlist.table[currentNode.state] = true
-  heap.Push(solver.openlist.queue, currentNode)
+  heap.Push(solver.openlist.queue, *currentNode)
 
   // generate the default goal state for the process
   solver.goalState()
@@ -168,24 +166,70 @@ func (s *Solver) goalState() {
 
 func (s *Solver) Solve() {
   var currentNode Node
+  var count int
+  var start board.Board
 
   for (s.openlist.queue.Len() > 0) {
-    // remove node index from open list
-    s.openlist.table[currentNode.state] = false
+    // returns the Node having lowest f-cost value(uses min-priority queue)
     currentNode = heap.Pop(s.openlist.queue).(Node)
 
-    // add node index to close list
-    s.closelist.table[currentNode.state] = true
-    heap.Push(s.closelist.queue, currentNode)
+    if (count == 0) {
+      start = currentNode.state
+    }
 
+    // goal state found
     if (currentNode.state == s.goal) {
-      // TODO: termination state
+      fmt.Printf("goal found")
+
+      n := s.goal
+      for (s.path[n] != start) {
+        n = s.path[n]
+        fmt.Println(n)
+      }
+
       break
-    } else {
-      adjacents := neighbours(currentNode.state)
-      for i := 0; i < len(adjacents); i++ {
-        //
+    }
+
+    // shifts low-cost node from open list to close list
+    delete(s.openlist.table, currentNode.state)
+    delete(s.openlist.nodeTable, currentNode.state)
+    // add low-cost node to close list
+    s.closelist.table[currentNode.state] = true
+
+    // nodes adjacent to the current node
+    adjacents := neighbours(currentNode.state)
+
+    for i := 0; i < len(adjacents); i++ {
+      // adjacent node is in close list
+      if (s.closelist.table[adjacents[i]]) {
+        continue
+      }
+
+      // adjacent node either unavailable in open list or can be improved
+      adjacentNode := s.openlist.nodeTable[adjacents[i]]
+      if ((!s.openlist.table[adjacents[i]]) || (currentNode.gCost + 1 < adjacentNode.gCost)) {
+        adjacentNode.gCost = currentNode.gCost + 1
+        adjacentNode.hCost = heuristicScore(adjacentNode.state)
+        adjacentNode.fCost = adjacentNode.gCost + adjacentNode.hCost
+        adjacentNode.state = adjacents[i]
+
+        // adjacent node is not in open list
+        if (!s.openlist.table[adjacentNode.state]) {
+          node := &Node{parent: &currentNode, state: adjacentNode.state}
+          scoring(node, false)
+
+          s.openlist.table[adjacents[i]] = true
+          s.openlist.nodeTable[adjacents[i]] = *node
+
+          fmt.Println("parent of ", adjacents[i], " is ", currentNode.state, "\n")
+          s.path[adjacents[i]] = currentNode.state
+          fmt.Println(len(s.path))
+
+          heap.Push(s.openlist.queue, *node)
+        }
       }
     }
+
+    count += 1
   }
 }
