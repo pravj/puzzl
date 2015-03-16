@@ -73,7 +73,9 @@ type Solver struct {
   Path *list.List
   Moves int
 
-  goal board.Board
+  Goal board.Board
+
+  Solved bool
 }
 
 // implements misplaced tile count as a heuristic scoring function
@@ -170,7 +172,7 @@ func (s *Solver) goalState() {
 
   b.BlankRow, b.BlankCol = 2, 2
 
-  s.goal = *b
+  s.Goal = *b
 }
 
 func (s *Solver) Solve() {
@@ -187,15 +189,16 @@ func (s *Solver) Solve() {
     }
 
     // goal found, generating path from start to goal state
-    if (currentNode.state == s.goal) {
-      state := s.goal
+    if (currentNode.state == s.Goal) {
+      state := s.Goal
       for (s.relation[state] != start) {
         state = s.relation[state]
         s.Path.PushFront(state)
       }
-      s.Path.PushBack(s.goal)
+      s.Path.PushBack(s.Goal)
 
       s.Moves = s.Path.Len()
+      s.Solved = true
 
       break
     }
