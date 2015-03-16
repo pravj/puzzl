@@ -2,10 +2,12 @@
 package solver
 
 // TODO: init() content
+// I smell it using some extra memory and that's not legit my friend.
 
 import (
-  "fmt"
+  _ "fmt"
   "container/heap"
+  "container/list"
   "github.com/pravj/puzzl/board"
 )
 
@@ -67,8 +69,11 @@ type Solver struct {
   openlist *OpenList
   closelist *CloseList
 
+  relation map[board.Board]board.Board
+  Path *list.List
+  Moves int
+
   goal board.Board
-  path map[board.Board]board.Board
 }
 
 // implements misplaced tile count as a heuristic scoring function
@@ -121,16 +126,20 @@ func New(b *board.Board) *Solver {
 
   // initiate the solver with open and close lists
   solver := &Solver{openlist: openlist, closelist: closelist}
+
+  // initiate traversal lists
   solver.openlist.nodeTable = make(map[board.Board]Node)
   solver.openlist.table = make(map[board.Board]bool)
   solver.closelist.table = make(map[board.Board]bool)
-  solver.path = make(map[board.Board]board.Board)
+
+  // initiate parent-child relationship and path
+  solver.relation = make(map[board.Board]board.Board)
+  solver.Path = list.New()
 
   var opq PriorityQueue
   heap.Init(&opq)
 
   solver.openlist.queue = &opq
-  fmt.Println("starting state ", *b, "\n")
 
   // Node representing the initial configuration of the board
   currentNode := &Node{parent: nil, state: *b}
@@ -177,15 +186,16 @@ func (s *Solver) Solve() {
       start = currentNode.state
     }
 
-    // goal state found
+    // goal found, generating path from start to goal state
     if (currentNode.state == s.goal) {
-      fmt.Printf("goal found")
-
-      n := s.goal
-      for (s.path[n] != start) {
-        n = s.path[n]
-        fmt.Println(n)
+      state := s.goal
+      for (s.relation[state] != start) {
+        state = s.relation[state]
+        s.Path.PushFront(state)
       }
+      s.Path.PushBack(s.goal)
+
+      s.Moves = s.Path.Len()
 
       break
     }
@@ -221,9 +231,7 @@ func (s *Solver) Solve() {
           s.openlist.table[adjacents[i]] = true
           s.openlist.nodeTable[adjacents[i]] = *node
 
-          fmt.Println("parent of ", adjacents[i], " is ", currentNode.state, "\n")
-          s.path[adjacents[i]] = currentNode.state
-          fmt.Println(len(s.path))
+          s.relation[adjacents[i]] = currentNode.state
 
           heap.Push(s.openlist.queue, *node)
         }
