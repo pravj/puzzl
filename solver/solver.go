@@ -5,7 +5,8 @@ package solver
 // I smell it using some extra memory and that's not legit my friend.
 
 import (
-  _ "fmt"
+  //"fmt"
+  //"reflect"
   "container/heap"
   "container/list"
   "github.com/pravj/puzzl/board"

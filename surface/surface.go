@@ -6,8 +6,9 @@ import "github.com/pravj/puzzl/solver"
 import "github.com/pravj/puzzl/board"
 import "unicode/utf8"
 import "strconv"
-//import "fmt"
-//import "os"
+import "fmt"
+import "container/list"
+import "os"
 
 const (
   cornerUL rune = '┌'
@@ -25,11 +26,12 @@ type Surface struct {
   gameBoard *board.Board
   gameSolver *solver.Solver
 
-  currentBoard board.Board
+  currentBoard *list.Element
+  solved bool
 }
 
 func New(b *board.Board, s *solver.Solver) *Surface {
-  sf := &Surface{gameBoard: b, gameSolver: s, currentBoard: *b}
+  sf := &Surface{gameBoard: b, gameSolver: s}
   sf.initiate()
 
   return sf
@@ -78,20 +80,34 @@ func (s *Surface) moveTile(dx, dy int) {
   if (((newX >= 0) && (newX <= 2)) && ((newY >= 0) && (newY <= 2))) {
     // a possible move
     if (s.gameSolver.Solved) {
+      if (!s.solved) {
+        s.solved = true
+        s.currentBoard = s.gameSolver.Path.Front()
+      }
+
       // solved by solver
       s.gameBoard.Move(newX, newY)
       s.drawBoard()
 
       // right move by player
-      if (s.gameSolver.Path[s.currentBoard] == *s.gameBoard) {
-        s.currentBoard = *s.gameBoard
+      // NOTIFICATION -> RIGHT MOVE
+      if (s.currentBoard.Value.(board.Board) == *s.gameBoard) {
+        if (s.currentBoard.Next() != nil) {
+          s.currentBoard = s.currentBoard.Next()
+        }
         // increase the score
       } else {
         // wrong move by player
+        // NOTIFICATION -> WRONG MOVE
+
+        // decrease the score
       }
 
-      // solved by player too
+      // solved by player too. Bingo.
+      // NOTIFICATION -> GAME COMPLETE
+      // WAIT FOR A WHILE AND EXIT THE PROCESS
       if (*s.gameBoard == s.gameSolver.Goal) {
+        os.Exit(0)
       }
     } else {
       // not yet solved by solver : NOTIFICATION -> WAIT
