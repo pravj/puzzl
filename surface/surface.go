@@ -11,6 +11,8 @@ import "fmt"
 import "container/list"
 import "os"
 
+// rune type Box-drawing characters
+// used to draw the game board interface
 const (
   cornerUL rune = '┌'
   cornerUR rune = '┐'
@@ -35,7 +37,8 @@ type Surface struct {
 }
 
 func New(b *board.Board, s *solver.Solver) *Surface {
-  sf := &Surface{gameBoard: b, gameSolver: s, scorer: score.New()}
+  scorer := score.New()
+  sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer}
   sf.initiate()
 
   return sf
@@ -68,35 +71,23 @@ func (s *Surface) drawCell(x, y int, ch rune) {
 }
 
 func (s *Surface) drawWall(x, y int, isLeft bool) {
-  termbox.SetCell(x + 21, y+1, '│', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 21, y+2, '│', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 21, y+3, '│', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 21, y+4, '│', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 21, y+5, '│', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 21, y+6, '│', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 21, y+7, '│', termbox.ColorDefault, termbox.ColorYellow)
+  for i := 1; i < 8; i++ {
+    termbox.SetCell(x + 21, y + i, vDash, termbox.ColorDefault, termbox.ColorYellow)
+  }
 
   if (isLeft) {
-    termbox.SetCell(x + 21, y+8, '└', termbox.ColorDefault, termbox.ColorYellow)
+    termbox.SetCell(x + 21, y + 8, cornerLL, termbox.ColorDefault, termbox.ColorYellow)
   } else {
-    termbox.SetCell(x + 21, y+8, '┘', termbox.ColorDefault, termbox.ColorYellow)
+    termbox.SetCell(x + 21, y + 8, cornerLR, termbox.ColorDefault, termbox.ColorYellow)
   }
 }
 
 func (s *Surface) drawScore(x, y int) {
   // score banner
-  termbox.SetCell(x + 22, y, 'G', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 23, y, 'A', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 24, y, 'M', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 25, y, 'E', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 26, y, ' ', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 27, y, 'S', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 28, y, 'C', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 29, y, 'O', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 30, y, 'R', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 31, y, 'E', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 32, y, ' ', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 33, y, ' ', termbox.ColorDefault, termbox.ColorYellow)
+  chars := []rune{'G', 'A', 'M', 'E', ' ', 'S', 'C', 'O', 'R', 'E', ' ', ' '}
+  for i := 0; i < 12; i++ {
+    termbox.SetCell(x + 22 + i, y, chars[i], termbox.ColorDefault, termbox.ColorYellow)
+  }
 
   // score value
   moves := fmt.Sprintf("%v", s.scorer.Value())
@@ -119,18 +110,10 @@ func (s *Surface) drawScore(x, y int) {
 
 func (s *Surface) drawPlayerMoves(x, y int) {
   // player moves banner
-  termbox.SetCell(x + 22, y + 3, 'P', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 23, y + 3, 'L', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 24, y + 3, 'A', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 25, y + 3, 'Y', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 26, y + 3, 'E', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 27, y + 3, 'R', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 28, y + 3, ' ', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 29, y + 3, 'M', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 30, y + 3, 'O', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 31, y + 3, 'V', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 32, y + 3, 'E', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 33, y + 3, 'S', termbox.ColorDefault, termbox.ColorYellow)
+  chars := []rune{'P', 'L', 'A', 'Y', 'E' ,'R', ' ', 'M', 'O', 'V', 'E', 'S'}
+  for i := 0; i < 12; i++ {
+    termbox.SetCell(x + 22 + i, y + 3, chars[i], termbox.ColorDefault, termbox.ColorYellow)
+  }
 
   // player moves value
   moves := fmt.Sprintf("%v", s.scorer.TotalMoves)
@@ -150,18 +133,10 @@ func (s *Surface) drawPlayerMoves(x, y int) {
 
 func (s *Surface) drawSolverMoves(x, y int) {
   // solver moves banner
-  termbox.SetCell(x + 22, y + 6, 'S', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 23, y + 6, 'O', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 24, y + 6, 'L', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 25, y + 6, 'V', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 26, y + 6, 'A', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 27, y + 6, 'B', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 28, y + 6, 'L', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 29, y + 6, 'E', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 30, y + 6, ' ', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 31, y + 6, 'I', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 32, y + 6, 'N', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 33, y + 6, ' ', termbox.ColorDefault, termbox.ColorYellow)
+  chars := []rune{'S', 'O', 'L', 'V', 'A', 'B', 'L', 'E', ' ', 'I', 'N', ' '}
+  for i := 0; i < 12; i++ {
+    termbox.SetCell(x + 22 + i, y + 6, chars[i], termbox.ColorDefault, termbox.ColorYellow)
+  }
 
   // solver moves value
   moves := fmt.Sprintf("%v", s.solvableMoves)
@@ -180,18 +155,9 @@ func (s *Surface) drawSolverMoves(x, y int) {
 }
 
 func (s *Surface) drawPartition(x, y int) {
-  termbox.SetCell(x + 22, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 23, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 24, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 25, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 26, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 27, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 28, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 29, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 30, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 31, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 32, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 33, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  for i := 0; i < 12; i++ {
+    termbox.SetCell(x + 22 + i, y + 8, hDash, termbox.ColorDefault, termbox.ColorYellow)
+  }
 }
 
 func (s *Surface) drawBoard() {
