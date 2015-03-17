@@ -240,9 +240,6 @@ func (s *Surface) moveTile(dx, dy int) {
       // updates the total game moves played yet
       s.scorer.TotalMoves += 1
 
-      // draws the game board, will have the updated total moves also
-      s.drawBoard()
-
       // right move by player
       // NOTIFICATION -> RIGHT MOVE
       if (s.currentBoard.Value.(board.Board) == *s.gameBoard) {
@@ -267,6 +264,9 @@ func (s *Surface) moveTile(dx, dy int) {
         // decrease the player's total
         s.scorer.PlayerTotal -= 1
       }
+
+      // draws the game board, will have the updated total moves also
+      s.drawBoard()
 
       // solved by player too. Bingo.
       // NOTIFICATION -> GAME COMPLETE
