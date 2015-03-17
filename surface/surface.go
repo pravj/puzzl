@@ -4,6 +4,7 @@ package surface
 import "github.com/nsf/termbox-go"
 import "github.com/pravj/puzzl/solver"
 import "github.com/pravj/puzzl/board"
+import "github.com/pravj/puzzl/score"
 import "unicode/utf8"
 import "strconv"
 import "fmt"
@@ -28,10 +29,12 @@ type Surface struct {
 
   currentBoard *list.Element
   solved bool
+
+  scorer *score.Score
 }
 
 func New(b *board.Board, s *solver.Solver) *Surface {
-  sf := &Surface{gameBoard: b, gameSolver: s}
+  sf := &Surface{gameBoard: b, gameSolver: s, scorer: score.New()}
   sf.initiate()
 
   return sf
@@ -89,18 +92,27 @@ func (s *Surface) moveTile(dx, dy int) {
       s.gameBoard.Move(newX, newY)
       s.drawBoard()
 
+      // updates the total game moves played yet
+      s.scorer.TotalMoves += 1
+
       // right move by player
       // NOTIFICATION -> RIGHT MOVE
       if (s.currentBoard.Value.(board.Board) == *s.gameBoard) {
         if (s.currentBoard.Next() != nil) {
           s.currentBoard = s.currentBoard.Next()
         }
-        // increase the score
+
+        // increase the player's total
+        s.scorer.PlayerTotal += 1
       } else {
         // wrong move by player
         // NOTIFICATION -> WRONG MOVE
+        s.gameSolver = solver.New(s.gameBoard)
+        s.gameSolver.Solve()
+        s.solved = false
 
-        // decrease the score
+        // decrease the player's total
+        s.scorer.PlayerTotal -= 1
       }
 
       // solved by player too. Bingo.
