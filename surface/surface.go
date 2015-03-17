@@ -45,34 +45,143 @@ func (s *Surface) drawCell(x, y int, ch rune) {
   termbox.SetCell(x+1, y, hDash, termbox.ColorDefault, termbox.ColorYellow)
   termbox.SetCell(x+2, y, hDash, termbox.ColorDefault, termbox.ColorYellow)
   termbox.SetCell(x+3, y, hDash, termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x+4, y, cornerUR, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x+4, y, hDash, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x+5, y, hDash, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x+6, y, cornerUR, termbox.ColorDefault, termbox.ColorYellow)
 
   termbox.SetCell(x, y+1, vDash, termbox.ColorDefault, termbox.ColorYellow)
   termbox.SetCell(x+1, y+1, blank, termbox.ColorDefault, termbox.ColorRed)
-  termbox.SetCell(x+2, y+1, ch, termbox.ColorDefault, termbox.ColorDefault)
-  termbox.SetCell(x+3, y+1, blank, termbox.ColorDefault, termbox.ColorRed)
-  termbox.SetCell(x+4, y+1, vDash, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x+2, y+1, blank, termbox.ColorDefault, termbox.ColorRed)
+  termbox.SetCell(x+3, y+1, ch, termbox.ColorDefault, termbox.ColorDefault)
+  termbox.SetCell(x+4, y+1, blank, termbox.ColorDefault, termbox.ColorRed)
+  termbox.SetCell(x+5, y+1, blank, termbox.ColorDefault, termbox.ColorRed)
+  termbox.SetCell(x+6, y+1, vDash, termbox.ColorDefault, termbox.ColorYellow)
 
   termbox.SetCell(x, y+2, cornerLL, termbox.ColorDefault, termbox.ColorYellow)
   termbox.SetCell(x+1, y+2, hDash, termbox.ColorDefault, termbox.ColorYellow)
   termbox.SetCell(x+2, y+2, hDash, termbox.ColorDefault, termbox.ColorYellow)
   termbox.SetCell(x+3, y+2, hDash, termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x+4, y+2, cornerLR, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x+4, y+2, hDash, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x+5, y+2, hDash, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x+6, y+2, cornerLR, termbox.ColorDefault, termbox.ColorYellow)
+}
+
+func (s *Surface) drawWall(x, y int, isLeft bool) {
+  termbox.SetCell(x + 21, y+1, '│', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 21, y+2, '│', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 21, y+3, '│', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 21, y+4, '│', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 21, y+5, '│', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 21, y+6, '│', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 21, y+7, '│', termbox.ColorDefault, termbox.ColorYellow)
+
+  if (isLeft) {
+    termbox.SetCell(x + 21, y+8, '└', termbox.ColorDefault, termbox.ColorYellow)
+  } else {
+    termbox.SetCell(x + 21, y+8, '┘', termbox.ColorDefault, termbox.ColorYellow)
+  }
+}
+
+func (s *Surface) drawScore(x, y int) {
+  // score banner
+  termbox.SetCell(x + 22, y, 'G', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 23, y, 'A', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 24, y, 'M', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 25, y, 'E', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 26, y, ' ', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 27, y, 'S', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 28, y, 'C', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 29, y, 'O', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 30, y, 'R', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 31, y, 'E', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 32, y, ' ', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 33, y, ' ', termbox.ColorDefault, termbox.ColorYellow)
+
+  // score value
+  termbox.SetCell(x + 22, y + 1, '0', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 23, y + 1, '.', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 24, y + 1, '4', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 25, y + 1, '5', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 26, y + 1, '2', termbox.ColorDefault, termbox.ColorYellow)
+}
+
+func (s *Surface) drawPlayerMoves(x, y int) {
+  // player moves banner
+  termbox.SetCell(x + 22, y + 3, 'P', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 23, y + 3, 'L', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 24, y + 3, 'A', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 25, y + 3, 'Y', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 26, y + 3, 'E', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 27, y + 3, 'R', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 28, y + 3, ' ', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 29, y + 3, 'M', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 30, y + 3, 'O', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 31, y + 3, 'V', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 32, y + 3, 'E', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 33, y + 3, 'S', termbox.ColorDefault, termbox.ColorYellow)
+
+  // player moves value
+  termbox.SetCell(x + 22, y + 4, '1', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 23, y + 4, '4', termbox.ColorDefault, termbox.ColorYellow)
+}
+
+func (s *Surface) drawSolverMoves(x, y int) {
+  // solver moves banner
+  termbox.SetCell(x + 22, y + 6, 'S', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 23, y + 6, 'O', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 24, y + 6, 'L', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 25, y + 6, 'V', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 26, y + 6, 'A', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 27, y + 6, 'B', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 28, y + 6, 'L', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 29, y + 6, 'E', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 30, y + 6, ' ', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 31, y + 6, 'I', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 32, y + 6, 'N', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 33, y + 6, ' ', termbox.ColorDefault, termbox.ColorYellow)
+
+  // solver moves value
+  termbox.SetCell(x + 22, y + 7, '1', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 23, y + 7, '2', termbox.ColorDefault, termbox.ColorYellow)
+}
+
+func (s *Surface) drawPartition(x, y int) {
+  termbox.SetCell(x + 22, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 23, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 24, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 25, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 26, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 27, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 28, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 29, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 30, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 31, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 32, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 33, y + 8, '─', termbox.ColorDefault, termbox.ColorYellow)
 }
 
 func (s *Surface) drawBoard() {
   w, h := termbox.Size()
   const coldef = termbox.ColorDefault
 
-  midy := h/2
-  midx := w/2
+  midy := h/2 - 5
+  midx := w/2 - 15
 
   for i := 0; i < 3; i++ {
     for j := 0; j < 3; j++ {
       r, _ := utf8.DecodeRuneInString(strconv.Itoa(s.gameBoard.Rows[i].Tiles[j].Value))
-      s.drawCell(midx + 5*j, midy + 3*i, r)
+      s.drawCell(midx + 7*j, midy + 3*i, r)
     }
   }
+
+  s.drawWall(midx, midy, true)
+  s.drawScore(midx, midy)
+  s.drawPlayerMoves(midx, midy)
+  s.drawSolverMoves(midx, midy)
+  s.drawPartition(midx, midy-3)
+  s.drawPartition(midx, midy-6)
+  s.drawPartition(midx, midy)
+  s.drawWall(midx+13, midy, false)
 
   termbox.Flush()
 }
@@ -94,6 +203,7 @@ func (s *Surface) moveTile(dx, dy int) {
 
       // updates the total game moves played yet
       s.scorer.TotalMoves += 1
+      fmt.Println("\n\n\n\n\n\n\n\n", s.gameSolver.Path.Len())
 
       // right move by player
       // NOTIFICATION -> RIGHT MOVE
