@@ -31,6 +31,7 @@ type Surface struct {
   solved bool
 
   scorer *score.Score
+  solvableMoves int
 }
 
 func New(b *board.Board, s *solver.Solver) *Surface {
@@ -98,11 +99,22 @@ func (s *Surface) drawScore(x, y int) {
   termbox.SetCell(x + 33, y, ' ', termbox.ColorDefault, termbox.ColorYellow)
 
   // score value
-  termbox.SetCell(x + 22, y + 1, '0', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 23, y + 1, '.', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 24, y + 1, '4', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 25, y + 1, '5', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 26, y + 1, '2', termbox.ColorDefault, termbox.ColorYellow)
+  moves := fmt.Sprintf("%v", s.scorer.Value())
+  length := len(moves)
+  if (length > 5) {
+    length = 5
+  }
+
+  var k int
+  for i := 0; i < length; i++ {
+    r, _ := utf8.DecodeRuneInString(string(moves[i]))
+    termbox.SetCell(x + 22 + i, y + 1, r, termbox.ColorDefault, termbox.ColorYellow)
+    k = i
+  }
+
+  for j := k+1; j < 12; j++ {
+    termbox.SetCell(x + 22 + j, y + 1, blank, termbox.ColorDefault, termbox.ColorYellow)
+  }
 }
 
 func (s *Surface) drawPlayerMoves(x, y int) {
@@ -121,8 +133,19 @@ func (s *Surface) drawPlayerMoves(x, y int) {
   termbox.SetCell(x + 33, y + 3, 'S', termbox.ColorDefault, termbox.ColorYellow)
 
   // player moves value
-  termbox.SetCell(x + 22, y + 4, '1', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 23, y + 4, '4', termbox.ColorDefault, termbox.ColorYellow)
+  moves := fmt.Sprintf("%v", s.scorer.TotalMoves)
+  length := len(moves)
+
+  var k int
+  for i := 0; i < length; i++ {
+    r, _ := utf8.DecodeRuneInString(string(moves[i]))
+    termbox.SetCell(x + 22 + i, y + 4, r, termbox.ColorDefault, termbox.ColorYellow)
+    k = i
+  }
+
+  for j := k+1; j < 12; j++ {
+    termbox.SetCell(x + 22 + j, y + 4, blank, termbox.ColorDefault, termbox.ColorYellow)
+  }
 }
 
 func (s *Surface) drawSolverMoves(x, y int) {
@@ -141,8 +164,19 @@ func (s *Surface) drawSolverMoves(x, y int) {
   termbox.SetCell(x + 33, y + 6, ' ', termbox.ColorDefault, termbox.ColorYellow)
 
   // solver moves value
-  termbox.SetCell(x + 22, y + 7, '1', termbox.ColorDefault, termbox.ColorYellow)
-  termbox.SetCell(x + 23, y + 7, '2', termbox.ColorDefault, termbox.ColorYellow)
+  moves := fmt.Sprintf("%v", s.solvableMoves)
+  length := len(moves)
+
+  var k int
+  for i := 0; i < length; i++ {
+    r, _ := utf8.DecodeRuneInString(string(moves[i]))
+    termbox.SetCell(x + 22 + i, y + 7, r, termbox.ColorDefault, termbox.ColorYellow)
+    k = i
+  }
+
+  for j := k+1; j < 12; j++ {
+    termbox.SetCell(x + 22 + j, y + 7, blank, termbox.ColorDefault, termbox.ColorYellow)
+  }
 }
 
 func (s *Surface) drawPartition(x, y int) {
@@ -175,13 +209,15 @@ func (s *Surface) drawBoard() {
   }
 
   s.drawWall(midx, midy, true)
+  s.drawWall(midx+13, midy, false)
+
   s.drawScore(midx, midy)
   s.drawPlayerMoves(midx, midy)
   s.drawSolverMoves(midx, midy)
+
   s.drawPartition(midx, midy-3)
   s.drawPartition(midx, midy-6)
   s.drawPartition(midx, midy)
-  s.drawWall(midx+13, midy, false)
 
   termbox.Flush()
 }
@@ -195,22 +231,28 @@ func (s *Surface) moveTile(dx, dy int) {
       if (!s.solved) {
         s.solved = true
         s.currentBoard = s.gameSolver.Path.Front()
+        s.solvableMoves = s.gameSolver.Path.Len()
       }
 
       // solved by solver
       s.gameBoard.Move(newX, newY)
-      s.drawBoard()
 
       // updates the total game moves played yet
       s.scorer.TotalMoves += 1
-      fmt.Println("\n\n\n\n\n\n\n\n", s.gameSolver.Path.Len())
+
+      // draws the game board, will have the updated total moves also
+      s.drawBoard()
 
       // right move by player
       // NOTIFICATION -> RIGHT MOVE
       if (s.currentBoard.Value.(board.Board) == *s.gameBoard) {
         if (s.currentBoard.Next() != nil) {
           s.currentBoard = s.currentBoard.Next()
+
         }
+
+        // updates the solvable moves count
+        s.solvableMoves -= 1
 
         // increase the player's total
         s.scorer.PlayerTotal += 1
@@ -220,6 +262,7 @@ func (s *Surface) moveTile(dx, dy int) {
         s.gameSolver = solver.New(s.gameBoard)
         s.gameSolver.Solve()
         s.solved = false
+        s.solvableMoves = s.gameSolver.Path.Len()
 
         // decrease the player's total
         s.scorer.PlayerTotal -= 1
