@@ -9,7 +9,9 @@ import "unicode/utf8"
 import "strconv"
 import "fmt"
 import "container/list"
-import "os"
+//import "os"
+//import "log"
+
 
 // rune type Box-drawing characters
 // used to draw the game board interface
@@ -34,11 +36,13 @@ type Surface struct {
 
   scorer *score.Score
   solvableMoves int
+
+  message string
 }
 
 func New(b *board.Board, s *solver.Solver) *Surface {
   scorer := score.New()
-  sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer}
+  sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer, message: "Welcome to the game Puzzl!"}
   sf.initiate()
 
   return sf
@@ -160,6 +164,34 @@ func (s *Surface) drawPartition(x, y int) {
   }
 }
 
+func (s *Surface) drawNotification(x, y int, message string) {
+  // notification widget boundary
+  termbox.SetCell(x, y - 3, cornerUL, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x, y - 2, vDash, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x, y - 1, cornerLL, termbox.ColorDefault, termbox.ColorYellow)
+
+  for i := 0; i < 33; i++ {
+    termbox.SetCell(x + 1 + i, y - 3, hDash, termbox.ColorDefault, termbox.ColorYellow)
+    termbox.SetCell(x + 1 + i, y - 1, hDash, termbox.ColorDefault, termbox.ColorYellow)
+  }
+
+  termbox.SetCell(x + 34, y - 3, cornerUR, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 34, y - 2, vDash, termbox.ColorDefault, termbox.ColorYellow)
+  termbox.SetCell(x + 34, y - 1, cornerLR, termbox.ColorDefault, termbox.ColorYellow)
+
+  // notification message value
+  var k int
+  for i := 0; i < len(message); i++ {
+    r, _ := utf8.DecodeRuneInString(string(message[i]))
+    termbox.SetCell(x + 1 + i, y - 2, r, termbox.ColorDefault, termbox.ColorYellow)
+    k = i
+  }
+
+  for j := k + 2; j < 34; j++ {
+    termbox.SetCell(x + j, y - 2, blank, termbox.ColorDefault, termbox.ColorYellow)
+  }
+}
+
 func (s *Surface) drawBoard() {
   w, h := termbox.Size()
   const coldef = termbox.ColorDefault
@@ -185,14 +217,17 @@ func (s *Surface) drawBoard() {
   s.drawPartition(midx, midy-6)
   s.drawPartition(midx, midy)
 
+  s.drawNotification(midx, midy, s.message)
+
   termbox.Flush()
 }
 
 func (s *Surface) moveTile(dx, dy int) {
   newX, newY := s.gameBoard.BlankRow + dx, s.gameBoard.BlankCol + dy
 
+  // a possible move
   if (((newX >= 0) && (newX <= 2)) && ((newY >= 0) && (newY <= 2))) {
-    // a possible move
+    // game has been solved by the solver
     if (s.gameSolver.Solved) {
       if (!s.solved) {
         s.solved = true
@@ -207,12 +242,13 @@ func (s *Surface) moveTile(dx, dy int) {
       s.scorer.TotalMoves += 1
 
       // right move by player
-      // NOTIFICATION -> RIGHT MOVE
       if (s.currentBoard.Value.(board.Board) == *s.gameBoard) {
         if (s.currentBoard.Next() != nil) {
           s.currentBoard = s.currentBoard.Next()
-
         }
+
+        // NOTIFICATION -> RIGHT MOVE
+        s.message = "Woot! Right Move"
 
         // updates the solvable moves count
         s.solvableMoves -= 1
@@ -221,34 +257,46 @@ func (s *Surface) moveTile(dx, dy int) {
         s.scorer.PlayerTotal += 1
       } else {
         // wrong move by player
-        // NOTIFICATION -> WRONG MOVE
         s.gameSolver = solver.New(s.gameBoard)
-        s.gameSolver.Solve()
-        s.solved = false
-        s.solvableMoves = s.gameSolver.Path.Len()
+
+        go func() {
+          s.gameSolver.Solve()
+          s.solved = false
+          s.solvableMoves = s.gameSolver.Path.Len()
+        }()
+
+        // NOTIFICATION -> WRONG MOVE
+        s.message = "Oops! Wrong Move"
 
         // decrease the player's total
         s.scorer.PlayerTotal -= 1
       }
 
-      // draws the game board, will have the updated total moves also
-      s.drawBoard()
-
       // solved by player too. Bingo.
       // NOTIFICATION -> GAME COMPLETE
       // WAIT FOR A WHILE AND EXIT THE PROCESS
       if (*s.gameBoard == s.gameSolver.Goal) {
-        os.Exit(0)
+        s.message = "Woot! You completed the game"
       }
+
+      // draws the game board, will have the updated total moves also
+      s.drawBoard()
+
     } else {
+      //os.Exit(1)
+      s.message = "Wait! Let bot solve it first"
+      s.drawBoard()
       // not yet solved by solver : NOTIFICATION -> WAIT
     }
   } else {
     // an impossible move : NOTIFICATION -> CAN NOT MOVE THERE
+    s.message = "Unable to move there"
+    s.drawBoard()
   }
 }
 
 func (s *Surface) initiate() {
+
   err := termbox.Init()
   if err != nil {
     panic(err)
