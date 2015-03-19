@@ -41,6 +41,8 @@ type Surface struct {
   Message string
 
   Notifier *notification.Notification
+
+  channelClosed bool
 }
 
 func New(b *board.Board, s *solver.Solver, n *notification.Notification) *Surface {
@@ -196,7 +198,7 @@ func (s *Surface) drawNotification(x, y int, message string) {
   }
 }
 
-func (s *Surface) DrawBoard() {
+func (s *Surface) drawBoard() {
   w, h := termbox.Size()
   const coldef = termbox.ColorDefault
 
@@ -252,7 +254,7 @@ func (s *Surface) moveTile(dx, dy int) {
         }
 
         // NOTIFICATION -> RIGHT MOVE
-        s.Message = "Woot! Right Move"
+        s.Message = notification.RightMoveMessage
 
         // updates the solvable moves count
         s.solvableMoves -= 1
@@ -268,11 +270,11 @@ func (s *Surface) moveTile(dx, dy int) {
           s.solved = false
           s.solvableMoves = s.gameSolver.Path.Len()
 
-          s.Notifier.Tunnel <- "Try Now"
+          s.Notifier.Tunnel <- notification.ReadyToPlayMessage
         }()
 
         // NOTIFICATION -> WRONG MOVE
-        s.Message = "Oops! Wrong Move"
+        s.Message = notification.WrongMoveMessage
 
         // decrease the player's total
         s.scorer.PlayerTotal -= 1
@@ -282,23 +284,25 @@ func (s *Surface) moveTile(dx, dy int) {
       // NOTIFICATION -> GAME COMPLETE
       // WAIT FOR A WHILE AND EXIT THE PROCESS
       if (*s.gameBoard == s.gameSolver.Goal) {
-        s.Message = "Woot! You completed the game"
+        s.Message = notification.GameCompleteMessage
+
         close(s.Notifier.Tunnel)
+        s.channelClosed = true
       }
 
       // draws the game board, will have the updated total moves also
-      s.DrawBoard()
+      s.drawBoard()
 
     } else {
       //os.Exit(1)
-      s.Message = "Wait! Let bot solve it first"
-      s.DrawBoard()
+      s.Message = notification.WaitMessage
+      s.drawBoard()
       // not yet solved by solver : NOTIFICATION -> WAIT
     }
   } else {
     // an impossible move : NOTIFICATION -> CAN NOT MOVE THERE
-    s.Message = "Unable to move there"
-    s.DrawBoard()
+    s.Message = notification.ImpossibleMoveMessage
+    s.drawBoard()
   }
 }
 
@@ -306,11 +310,12 @@ func (s *Surface) initiate() {
 
   go func() {
     for e := range s.Notifier.Tunnel {
-      //
+      // updates the solvable moves count for the game
+      // it fixes the issue where game wasn't showing it in the starting
       s.solvableMoves = s.gameSolver.Path.Len()
 
       s.Message = e
-      s.DrawBoard()
+      s.drawBoard()
     }
   }()
 
@@ -323,7 +328,7 @@ func (s *Surface) initiate() {
   termbox.SetInputMode(termbox.InputEsc)
   termbox.HideCursor()
 
-  s.DrawBoard()
+  s.drawBoard()
 
   GameLoop:
     for {
@@ -332,7 +337,9 @@ func (s *Surface) initiate() {
       case termbox.EventKey:
         switch ev.Key {
         case termbox.KeyEsc:
-          close(s.Notifier.Tunnel)
+          if (!s.channelClosed) {
+            close(s.Notifier.Tunnel)
+          }
           break GameLoop
         case termbox.KeyArrowUp:
           s.moveTile(-1, 0)
@@ -348,6 +355,6 @@ func (s *Surface) initiate() {
         panic(ev.Err)
       }
 
-      s.DrawBoard()
+      s.drawBoard()
     }
 }

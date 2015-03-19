@@ -15,7 +15,7 @@ func main() {
 	gameSolver := solver.New(gameBoard)
         go func() {
           gameSolver.Solve()
-          gameNotification.Tunnel <- "Try Now"
+          gameNotification.Tunnel <- notification.WelcomeMessage
         }()
 
 	surface.New(gameBoard, gameSolver, gameNotification)
