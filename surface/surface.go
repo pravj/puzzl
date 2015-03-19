@@ -10,8 +10,6 @@ import "unicode/utf8"
 import "strconv"
 import "fmt"
 import "container/list"
-//import "os"
-//import "log"
 
 
 // rune type Box-drawing characters
@@ -228,6 +226,15 @@ func (s *Surface) drawBoard() {
   termbox.Flush()
 }
 
+func (s *Surface) decideAction(dx, dy int) {
+  if (!s.channelClosed) {
+    s.moveTile(dx, dy)
+  } else {
+    s.Message = "Press ESC key to quit"
+    s.drawBoard()
+  }
+}
+
 func (s *Surface) moveTile(dx, dy int) {
   newX, newY := s.gameBoard.BlankRow + dx, s.gameBoard.BlankCol + dy
 
@@ -342,13 +349,13 @@ func (s *Surface) initiate() {
           }
           break GameLoop
         case termbox.KeyArrowUp:
-          s.moveTile(-1, 0)
+          s.decideAction(-1, 0)
         case termbox.KeyArrowDown:
-          s.moveTile(1, 0)
+          s.decideAction(1, 0)
         case termbox.KeyArrowLeft:
-          s.moveTile(0, -1)
+          s.decideAction(0, -1)
         case termbox.KeyArrowRight:
-          s.moveTile(0, 1)
+          s.decideAction(0, 1)
         }
 
       case termbox.EventError:

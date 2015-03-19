@@ -74,6 +74,7 @@ func (b *Board) arrange() {
   values := r.Perm(SIZE*SIZE)
   //values := []int{8,6,7,2,5,4,3,0,1} // hard
   //values := []int{2,5,3,1,0,6,4,7,8} // easy
+  //values := []int{1,2,3,7,8,4,0,5,6} // other
 
   for i := 0; i < SIZE; i++ {
     for j := 0; j < SIZE; j++ {
