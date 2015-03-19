@@ -37,12 +37,15 @@ type Surface struct {
   scorer *score.Score
   solvableMoves int
 
-  message string
+  Message string
+
+  Tunnel chan string
 }
 
 func New(b *board.Board, s *solver.Solver) *Surface {
   scorer := score.New()
-  sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer, message: "Welcome to the game Puzzl!"}
+  sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer, Message: "Welcome to the game Puzzl!", Tunnel: make(chan string)}
+
   sf.initiate()
 
   return sf
@@ -192,7 +195,7 @@ func (s *Surface) drawNotification(x, y int, message string) {
   }
 }
 
-func (s *Surface) drawBoard() {
+func (s *Surface) DrawBoard() {
   w, h := termbox.Size()
   const coldef = termbox.ColorDefault
 
@@ -217,7 +220,7 @@ func (s *Surface) drawBoard() {
   s.drawPartition(midx, midy-6)
   s.drawPartition(midx, midy)
 
-  s.drawNotification(midx, midy, s.message)
+  s.drawNotification(midx, midy, s.Message)
 
   termbox.Flush()
 }
@@ -248,7 +251,7 @@ func (s *Surface) moveTile(dx, dy int) {
         }
 
         // NOTIFICATION -> RIGHT MOVE
-        s.message = "Woot! Right Move"
+        s.Message = "Woot! Right Move"
 
         // updates the solvable moves count
         s.solvableMoves -= 1
@@ -263,10 +266,12 @@ func (s *Surface) moveTile(dx, dy int) {
           s.gameSolver.Solve()
           s.solved = false
           s.solvableMoves = s.gameSolver.Path.Len()
+
+          s.Tunnel <- "Try Now"
         }()
 
         // NOTIFICATION -> WRONG MOVE
-        s.message = "Oops! Wrong Move"
+        s.Message = "Oops! Wrong Move"
 
         // decrease the player's total
         s.scorer.PlayerTotal -= 1
@@ -276,26 +281,34 @@ func (s *Surface) moveTile(dx, dy int) {
       // NOTIFICATION -> GAME COMPLETE
       // WAIT FOR A WHILE AND EXIT THE PROCESS
       if (*s.gameBoard == s.gameSolver.Goal) {
-        s.message = "Woot! You completed the game"
+        s.Message = "Woot! You completed the game"
+        close(s.Tunnel)
       }
 
       // draws the game board, will have the updated total moves also
-      s.drawBoard()
+      s.DrawBoard()
 
     } else {
       //os.Exit(1)
-      s.message = "Wait! Let bot solve it first"
-      s.drawBoard()
+      s.Message = "Wait! Let bot solve it first"
+      s.DrawBoard()
       // not yet solved by solver : NOTIFICATION -> WAIT
     }
   } else {
     // an impossible move : NOTIFICATION -> CAN NOT MOVE THERE
-    s.message = "Unable to move there"
-    s.drawBoard()
+    s.Message = "Unable to move there"
+    s.DrawBoard()
   }
 }
 
 func (s *Surface) initiate() {
+
+  go func() {
+    for e := range s.Tunnel {
+      s.Message = e
+      s.DrawBoard()
+    }
+  }()
 
   err := termbox.Init()
   if err != nil {
@@ -306,7 +319,7 @@ func (s *Surface) initiate() {
   termbox.SetInputMode(termbox.InputEsc)
   termbox.HideCursor()
 
-  s.drawBoard()
+  s.DrawBoard()
 
   GameLoop:
     for {
@@ -315,6 +328,7 @@ func (s *Surface) initiate() {
       case termbox.EventKey:
         switch ev.Key {
         case termbox.KeyEsc:
+          close(s.Tunnel)
           break GameLoop
         case termbox.KeyArrowUp:
           s.moveTile(-1, 0)
@@ -330,6 +344,6 @@ func (s *Surface) initiate() {
         panic(ev.Err)
       }
 
-      s.drawBoard()
+      s.DrawBoard()
     }
 }
