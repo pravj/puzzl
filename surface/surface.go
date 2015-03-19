@@ -5,6 +5,7 @@ import "github.com/nsf/termbox-go"
 import "github.com/pravj/puzzl/solver"
 import "github.com/pravj/puzzl/board"
 import "github.com/pravj/puzzl/score"
+import "github.com/pravj/puzzl/notification"
 import "unicode/utf8"
 import "strconv"
 import "fmt"
@@ -39,12 +40,12 @@ type Surface struct {
 
   Message string
 
-  Tunnel chan string
+  Notifier *notification.Notification
 }
 
-func New(b *board.Board, s *solver.Solver) *Surface {
+func New(b *board.Board, s *solver.Solver, n *notification.Notification) *Surface {
   scorer := score.New()
-  sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer, Message: "Welcome to the game Puzzl!", Tunnel: make(chan string)}
+  sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer, Message: "Welcome to the game Puzzl!", Notifier: n}
 
   sf.initiate()
 
@@ -267,7 +268,7 @@ func (s *Surface) moveTile(dx, dy int) {
           s.solved = false
           s.solvableMoves = s.gameSolver.Path.Len()
 
-          s.Tunnel <- "Try Now"
+          s.Notifier.Tunnel <- "Try Now"
         }()
 
         // NOTIFICATION -> WRONG MOVE
@@ -282,7 +283,7 @@ func (s *Surface) moveTile(dx, dy int) {
       // WAIT FOR A WHILE AND EXIT THE PROCESS
       if (*s.gameBoard == s.gameSolver.Goal) {
         s.Message = "Woot! You completed the game"
-        close(s.Tunnel)
+        close(s.Notifier.Tunnel)
       }
 
       // draws the game board, will have the updated total moves also
@@ -304,7 +305,10 @@ func (s *Surface) moveTile(dx, dy int) {
 func (s *Surface) initiate() {
 
   go func() {
-    for e := range s.Tunnel {
+    for e := range s.Notifier.Tunnel {
+      //
+      s.solvableMoves = s.gameSolver.Path.Len()
+
       s.Message = e
       s.DrawBoard()
     }
@@ -328,7 +332,7 @@ func (s *Surface) initiate() {
       case termbox.EventKey:
         switch ev.Key {
         case termbox.KeyEsc:
-          close(s.Tunnel)
+          close(s.Notifier.Tunnel)
           break GameLoop
         case termbox.KeyArrowUp:
           s.moveTile(-1, 0)
