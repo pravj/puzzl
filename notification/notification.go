@@ -10,6 +10,7 @@ const (
 	ImpossibleMoveMessage string = "Unable to move there"
 	WaitMessage           string = "Wait! Let bot solve it first"
 	ReadyToPlayMessage    string = "OK! You can play now"
+	QuitMessage           string = "Press ESC key to quit"
 )
 
 // Notification struct
