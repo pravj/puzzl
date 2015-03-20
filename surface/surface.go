@@ -39,7 +39,8 @@ type Surface struct {
 
 	Message string
 
-	Notifier *notification.Notification
+	Notifier          *notification.Notification
+	NotificationColor termbox.Attribute
 
 	channelClosed bool
 }
@@ -47,7 +48,7 @@ type Surface struct {
 // New returns pointer to a new Surface instance
 func New(b *board.Board, s *solver.Solver, n *notification.Notification) *Surface {
 	scorer := score.New()
-	sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer, Message: "Welcome to the game Puzzl!", Notifier: n}
+	sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer, Message: "Welcome to the game Puzzl!", Notifier: n, NotificationColor: termbox.ColorCyan}
 
 	sf.initiate()
 
@@ -55,40 +56,47 @@ func New(b *board.Board, s *solver.Solver, n *notification.Notification) *Surfac
 }
 
 func (s *Surface) drawCell(x, y int, ch rune) {
-	termbox.SetCell(x, y, cornerUL, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+1, y, hDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+2, y, hDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+3, y, hDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+4, y, hDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+5, y, hDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+6, y, cornerUR, termbox.ColorDefault, termbox.ColorYellow)
+	var bgColor termbox.Attribute
+	if ch == '0' {
+		bgColor = termbox.ColorRed
+	} else {
+		bgColor = termbox.ColorBlue
+	}
 
-	termbox.SetCell(x, y+1, vDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+1, y+1, blank, termbox.ColorDefault, termbox.ColorRed)
-	termbox.SetCell(x+2, y+1, blank, termbox.ColorDefault, termbox.ColorRed)
-	termbox.SetCell(x+3, y+1, ch, termbox.ColorDefault, termbox.ColorDefault)
-	termbox.SetCell(x+4, y+1, blank, termbox.ColorDefault, termbox.ColorRed)
-	termbox.SetCell(x+5, y+1, blank, termbox.ColorDefault, termbox.ColorRed)
-	termbox.SetCell(x+6, y+1, vDash, termbox.ColorDefault, termbox.ColorYellow)
+	termbox.SetCell(x, y, cornerUL, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+1, y, hDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+2, y, hDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+3, y, hDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+4, y, hDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+5, y, hDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+6, y, cornerUR, termbox.ColorDefault, termbox.ColorCyan)
 
-	termbox.SetCell(x, y+2, cornerLL, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+1, y+2, hDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+2, y+2, hDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+3, y+2, hDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+4, y+2, hDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+5, y+2, hDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+6, y+2, cornerLR, termbox.ColorDefault, termbox.ColorYellow)
+	termbox.SetCell(x, y+1, vDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+1, y+1, blank, termbox.ColorDefault, bgColor)
+	termbox.SetCell(x+2, y+1, blank, termbox.ColorDefault, bgColor)
+	termbox.SetCell(x+3, y+1, ch, termbox.ColorDefault, bgColor)
+	termbox.SetCell(x+4, y+1, blank, termbox.ColorDefault, bgColor)
+	termbox.SetCell(x+5, y+1, blank, termbox.ColorDefault, bgColor)
+	termbox.SetCell(x+6, y+1, vDash, termbox.ColorDefault, termbox.ColorCyan)
+
+	termbox.SetCell(x, y+2, cornerLL, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+1, y+2, hDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+2, y+2, hDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+3, y+2, hDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+4, y+2, hDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+5, y+2, hDash, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+6, y+2, cornerLR, termbox.ColorDefault, termbox.ColorCyan)
 }
 
 func (s *Surface) drawWall(x, y int, isLeft bool) {
 	for i := 1; i < 8; i++ {
-		termbox.SetCell(x+21, y+i, vDash, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+21, y+i, vDash, termbox.ColorDefault, termbox.ColorCyan)
 	}
 
 	if isLeft {
-		termbox.SetCell(x+21, y+8, cornerLL, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+21, y+8, cornerLL, termbox.ColorDefault, termbox.ColorCyan)
 	} else {
-		termbox.SetCell(x+21, y+8, cornerLR, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+21, y+8, cornerLR, termbox.ColorDefault, termbox.ColorCyan)
 	}
 }
 
@@ -109,12 +117,12 @@ func (s *Surface) drawScore(x, y int) {
 	var k int
 	for i := 0; i < length; i++ {
 		r, _ := utf8.DecodeRuneInString(string(moves[i]))
-		termbox.SetCell(x+22+i, y+1, r, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+22+i, y+1, r, termbox.ColorDefault, termbox.ColorMagenta)
 		k = i
 	}
 
 	for j := k + 1; j < 12; j++ {
-		termbox.SetCell(x+22+j, y+1, blank, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+22+j, y+1, blank, termbox.ColorDefault, termbox.ColorMagenta)
 	}
 }
 
@@ -132,12 +140,12 @@ func (s *Surface) drawPlayerMoves(x, y int) {
 	var k int
 	for i := 0; i < length; i++ {
 		r, _ := utf8.DecodeRuneInString(string(moves[i]))
-		termbox.SetCell(x+22+i, y+4, r, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+22+i, y+4, r, termbox.ColorDefault, termbox.ColorMagenta)
 		k = i
 	}
 
 	for j := k + 1; j < 12; j++ {
-		termbox.SetCell(x+22+j, y+4, blank, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+22+j, y+4, blank, termbox.ColorDefault, termbox.ColorMagenta)
 	}
 }
 
@@ -155,46 +163,46 @@ func (s *Surface) drawSolverMoves(x, y int) {
 	var k int
 	for i := 0; i < length; i++ {
 		r, _ := utf8.DecodeRuneInString(string(moves[i]))
-		termbox.SetCell(x+22+i, y+7, r, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+22+i, y+7, r, termbox.ColorDefault, termbox.ColorMagenta)
 		k = i
 	}
 
 	for j := k + 1; j < 12; j++ {
-		termbox.SetCell(x+22+j, y+7, blank, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+22+j, y+7, blank, termbox.ColorDefault, termbox.ColorMagenta)
 	}
 }
 
 func (s *Surface) drawPartition(x, y int) {
 	for i := 0; i < 12; i++ {
-		termbox.SetCell(x+22+i, y+8, hDash, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+22+i, y+8, hDash, termbox.ColorDefault, termbox.ColorCyan)
 	}
 }
 
 func (s *Surface) drawNotification(x, y int, message string) {
 	// notification widget boundary
-	termbox.SetCell(x, y-3, cornerUL, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x, y-2, vDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x, y-1, cornerLL, termbox.ColorDefault, termbox.ColorYellow)
+	termbox.SetCell(x, y-3, cornerUL, termbox.ColorDefault, termbox.ColorBlue)
+	termbox.SetCell(x, y-2, vDash, termbox.ColorDefault, termbox.ColorBlue)
+	termbox.SetCell(x, y-1, cornerLL, termbox.ColorDefault, termbox.ColorBlue)
 
 	for i := 0; i < 33; i++ {
-		termbox.SetCell(x+1+i, y-3, hDash, termbox.ColorDefault, termbox.ColorYellow)
-		termbox.SetCell(x+1+i, y-1, hDash, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+1+i, y-3, hDash, termbox.ColorDefault, termbox.ColorBlue)
+		termbox.SetCell(x+1+i, y-1, hDash, termbox.ColorDefault, termbox.ColorBlue)
 	}
 
-	termbox.SetCell(x+34, y-3, cornerUR, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+34, y-2, vDash, termbox.ColorDefault, termbox.ColorYellow)
-	termbox.SetCell(x+34, y-1, cornerLR, termbox.ColorDefault, termbox.ColorYellow)
+	termbox.SetCell(x+34, y-3, cornerUR, termbox.ColorDefault, termbox.ColorBlue)
+	termbox.SetCell(x+34, y-2, vDash, termbox.ColorDefault, termbox.ColorBlue)
+	termbox.SetCell(x+34, y-1, cornerLR, termbox.ColorDefault, termbox.ColorBlue)
 
 	// notification message value
 	var k int
 	for i := 0; i < len(message); i++ {
 		r, _ := utf8.DecodeRuneInString(string(message[i]))
-		termbox.SetCell(x+1+i, y-2, r, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+1+i, y-2, r, termbox.ColorDefault, s.NotificationColor)
 		k = i
 	}
 
 	for j := k + 2; j < 34; j++ {
-		termbox.SetCell(x+j, y-2, blank, termbox.ColorDefault, termbox.ColorYellow)
+		termbox.SetCell(x+j, y-2, blank, termbox.ColorDefault, s.NotificationColor)
 	}
 }
 
@@ -232,6 +240,9 @@ func (s *Surface) decideAction(dx, dy int) {
 	if !s.channelClosed {
 		s.moveTile(dx, dy)
 	} else {
+		// NOTIFICATION COLOR -> RED
+		s.NotificationColor = termbox.ColorRed
+
 		s.Message = notification.QuitMessage
 		s.drawBoard()
 	}
@@ -265,6 +276,9 @@ func (s *Surface) moveTile(dx, dy int) {
 				// NOTIFICATION -> RIGHT MOVE
 				s.Message = notification.RightMoveMessage
 
+				// NOTIFICATION COLOR -> GREEN
+				s.NotificationColor = termbox.ColorGreen
+
 				// updates the solvable moves count
 				s.solvableMoves--
 
@@ -279,11 +293,17 @@ func (s *Surface) moveTile(dx, dy int) {
 					s.solved = false
 					s.solvableMoves = s.gameSolver.Path.Len()
 
+					// NOTIFICATION COLOR -> GREEN
+					s.NotificationColor = termbox.ColorGreen
+
 					s.Notifier.Tunnel <- notification.ReadyToPlayMessage
 				}()
 
 				// NOTIFICATION -> WRONG MOVE
 				s.Message = notification.WrongMoveMessage
+
+				// NOTIFICATION COLOR -> RED
+				s.NotificationColor = termbox.ColorRed
 
 				// decrease the player's total
 				s.scorer.PlayerTotal--
@@ -294,6 +314,9 @@ func (s *Surface) moveTile(dx, dy int) {
 			if *s.gameBoard == s.gameSolver.Goal {
 				s.Message = notification.GameCompleteMessage
 
+				// NOTIFICATION COLOR -> CYAN
+				s.NotificationColor = termbox.ColorCyan
+
 				close(s.Notifier.Tunnel)
 				s.channelClosed = true
 			}
@@ -302,14 +325,20 @@ func (s *Surface) moveTile(dx, dy int) {
 			s.drawBoard()
 
 		} else {
-			//os.Exit(1)
+			// not yet solved by solver : NOTIFICATION -> WAIT
 			s.Message = notification.WaitMessage
 			s.drawBoard()
-			// not yet solved by solver : NOTIFICATION -> WAIT
+
+			// NOTIFICATION COLOR -> Yellow
+			s.NotificationColor = termbox.ColorYellow
 		}
 	} else {
 		// an impossible move : NOTIFICATION -> CAN NOT MOVE THERE
 		s.Message = notification.ImpossibleMoveMessage
+
+		// NOTIFICATION COLOR -> RED
+		s.NotificationColor = termbox.ColorRed
+
 		s.drawBoard()
 	}
 }

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-        // SIZE of the puzzle board(fixed though)
+	// SIZE of the puzzle board(fixed though)
 	SIZE int = 3
 )
 
