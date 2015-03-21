@@ -1,15 +1,17 @@
 // Package surface implements terminal GUI operations for the game
 package surface
 
-import "github.com/nsf/termbox-go"
-import "github.com/pravj/puzzl/solver"
-import "github.com/pravj/puzzl/board"
-import "github.com/pravj/puzzl/score"
-import "github.com/pravj/puzzl/notification"
-import "unicode/utf8"
-import "strconv"
-import "fmt"
-import "container/list"
+import (
+	"container/list"
+	"fmt"
+	"github.com/nsf/termbox-go"
+	"github.com/pravj/puzzl/board"
+	"github.com/pravj/puzzl/notification"
+	"github.com/pravj/puzzl/score"
+	"github.com/pravj/puzzl/solver"
+	"strconv"
+	"unicode/utf8"
+)
 
 // rune type Box-drawing characters
 // used to draw the game board interface
@@ -44,7 +46,7 @@ type Surface struct {
 
 	channelClosed bool
 
-        hintCount int
+	hintCount int
 }
 
 // New returns pointer to a new Surface instance
@@ -57,7 +59,10 @@ func New(b *board.Board, s *solver.Solver, n *notification.Notification) *Surfac
 	return sf
 }
 
+// Draws a cell(square) structure on terminal
+// That consists the digit from the game board
 func (s *Surface) drawCell(x, y int, ch rune) {
+	// Red color for blank cell and Blue for others
 	var bgColor termbox.Attribute
 	if ch == '0' {
 		bgColor = termbox.ColorRed
@@ -90,6 +95,7 @@ func (s *Surface) drawCell(x, y int, ch rune) {
 	termbox.SetCell(x+6, y+2, cornerLR, termbox.ColorDefault, termbox.ColorCyan)
 }
 
+// Draws a vertical wall to separate sections
 func (s *Surface) drawWall(x, y int, isLeft bool) {
 	for i := 1; i < 8; i++ {
 		termbox.SetCell(x+21, y+i, vDash, termbox.ColorDefault, termbox.ColorCyan)
@@ -102,7 +108,9 @@ func (s *Surface) drawWall(x, y int, isLeft bool) {
 	}
 }
 
+// Draws game's scoring section
 func (s *Surface) drawScore(x, y int) {
+	// fills the blank space of two ticks
 	termbox.SetCell(x+21, y, blank, termbox.ColorDefault, termbox.ColorCyan)
 	termbox.SetCell(x+34, y, blank, termbox.ColorDefault, termbox.ColorCyan)
 
@@ -131,6 +139,7 @@ func (s *Surface) drawScore(x, y int) {
 	}
 }
 
+// Draws game's player moves section
 func (s *Surface) drawPlayerMoves(x, y int) {
 	// player moves banner
 	chars := []rune{'P', 'L', 'A', 'Y', 'E', 'R', ' ', 'M', 'O', 'V', 'E', 'S'}
@@ -154,6 +163,7 @@ func (s *Surface) drawPlayerMoves(x, y int) {
 	}
 }
 
+// Draws game's solver moves section
 func (s *Surface) drawSolverMoves(x, y int) {
 	// solver moves banner
 	chars := []rune{'S', 'O', 'L', 'V', 'A', 'B', 'L', 'E', ' ', 'I', 'N', ' '}
@@ -177,12 +187,14 @@ func (s *Surface) drawSolverMoves(x, y int) {
 	}
 }
 
+// Draws horizontal partitioning between different sections
 func (s *Surface) drawPartition(x, y int) {
 	for i := 0; i < 12; i++ {
 		termbox.SetCell(x+22+i, y+8, hDash, termbox.ColorDefault, termbox.ColorCyan)
 	}
 }
 
+// Draws notifications in real time
 func (s *Surface) drawNotification(x, y int, message string) {
 	// notification widget boundary
 	termbox.SetCell(x, y-3, cornerUL, termbox.ColorDefault, termbox.ColorBlue)
@@ -211,6 +223,7 @@ func (s *Surface) drawNotification(x, y int, message string) {
 	}
 }
 
+// Combines all the sections and draw the entire game board accordingly
 func (s *Surface) drawBoard() {
 	w, h := termbox.Size()
 	const coldef = termbox.ColorDefault
@@ -241,6 +254,7 @@ func (s *Surface) drawBoard() {
 	termbox.Flush()
 }
 
+// decide the game actions according to the game state
 func (s *Surface) decideAction(dx, dy int) {
 	if !s.channelClosed {
 		s.moveTile(dx, dy)
@@ -253,6 +267,7 @@ func (s *Surface) decideAction(dx, dy int) {
 	}
 }
 
+// move a tile in a given direction
 func (s *Surface) moveTile(dx, dy int) {
 	newX, newY := s.gameBoard.BlankRow+dx, s.gameBoard.BlankCol+dy
 
@@ -322,7 +337,7 @@ func (s *Surface) moveTile(dx, dy int) {
 				// NOTIFICATION COLOR -> CYAN
 				s.NotificationColor = termbox.ColorCyan
 
-                                // update game status, close notification channel
+				// update game status, close notification channel
 				close(s.Notifier.Tunnel)
 				s.channelClosed = true
 			}
@@ -349,40 +364,43 @@ func (s *Surface) moveTile(dx, dy int) {
 	}
 }
 
+// shows hints when asked, there is a limit for hints though
 func (s *Surface) showHint() {
-  if (s.gameSolver.Solved && s.hintCount > 0) {
-    present := s.gameBoard
-    presentRow, presentCol := present.BlankRow, present.BlankCol
+	if s.gameSolver.Solved && s.hintCount > 0 {
+		present := s.gameBoard
+		presentRow, presentCol := present.BlankRow, present.BlankCol
 
-    future := s.currentBoard.Value.(board.Board)
-    futureRow, futureCol := future.BlankRow, future.BlankCol
+		future := s.currentBoard.Value.(board.Board)
+		futureRow, futureCol := future.BlankRow, future.BlankCol
 
-    var direction string
+		var direction string
 
-    if (futureRow > presentRow) {
-      direction = "down"
-    } else if (futureRow < presentRow){
-      direction = "up"
-    } else if (futureCol > presentCol) {
-      direction = "right"
-    } else if (futureCol < presentCol) {
-      direction = "left"
-    }
+		if futureRow > presentRow {
+			direction = "down"
+		} else if futureRow < presentRow {
+			direction = "up"
+		} else if futureCol > presentCol {
+			direction = "right"
+		} else if futureCol < presentCol {
+			direction = "left"
+		}
 
-    s.NotificationColor = termbox.ColorCyan
-    s.hintCount--
-    s.Message = fmt.Sprintf("Hint #%v - move %v side", 3-s.hintCount, direction)
-  } else if (s.gameSolver.Solved && s.hintCount <= 0) {
-    s.NotificationColor = termbox.ColorRed
-    s.Message = "No more hints my friend."
-  } else {
-    s.NotificationColor = termbox.ColorYellow
-    s.Message = notification.WaitMessage
-  }
+		s.NotificationColor = termbox.ColorCyan
+		s.hintCount--
+		s.Message = fmt.Sprintf("Hint #%v - move %v side", 3-s.hintCount, direction)
+	} else if s.gameSolver.Solved && s.hintCount <= 0 {
+		s.NotificationColor = termbox.ColorRed
+		s.Message = "No more hints my friend."
+	} else {
+		s.NotificationColor = termbox.ColorYellow
+		s.Message = notification.WaitMessage
+	}
 
-  s.drawBoard()
+	s.drawBoard()
 }
 
+// Initialize all the concurrent processes
+// To monitor user input events and notification communication
 func (s *Surface) initiate() {
 
 	go func() {
@@ -391,7 +409,7 @@ func (s *Surface) initiate() {
 			// it fixes the issue where game wasn't showing it in the starting
 			s.solvableMoves = s.gameSolver.Path.Len()
 
-                        s.currentBoard = s.gameSolver.Path.Front()
+			s.currentBoard = s.gameSolver.Path.Front()
 
 			s.Message = e
 			s.drawBoard()
@@ -430,12 +448,12 @@ GameLoop:
 				s.decideAction(0, 1)
 			}
 
-                        switch ev.Ch {
-                        case 'h':
-                                s.showHint()
-                        case 'H':
-                                s.showHint()
-                        }
+			switch ev.Ch {
+			case 'h':
+				s.showHint()
+			case 'H':
+				s.showHint()
+			}
 
 		case termbox.EventError:
 			panic(ev.Err)

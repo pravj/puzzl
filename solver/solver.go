@@ -22,22 +22,28 @@ type Node struct {
 	index int
 }
 
+// PriorityQueue represents a priority queue data structure
+// that contains the game's state space nodes
 type PriorityQueue []Node
 
+// Len returns the length of priority queue
 func (pq PriorityQueue) Len() int {
 	return len(pq)
 }
 
+// Less helps removing the most prioritized node
 func (pq PriorityQueue) Less(i, j int) bool {
 	return pq[i].fCost < pq[j].fCost
 }
 
+// Swap interchanges two game node states with each other
 func (pq PriorityQueue) Swap(i, j int) {
 	pq[i], pq[j] = pq[j], pq[i]
 	pq[i].index = i
 	pq[j].index = j
 }
 
+// Push adds a node to the priority queue
 func (pq *PriorityQueue) Push(x interface{}) {
 	n := len(*pq)
 	item := x.(Node)
@@ -45,6 +51,7 @@ func (pq *PriorityQueue) Push(x interface{}) {
 	*pq = append(*pq, item)
 }
 
+// Pop removes a node from the priority queue
 func (pq *PriorityQueue) Pop() interface{} {
 	old := *pq
 	n := len(old)
