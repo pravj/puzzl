@@ -43,12 +43,14 @@ type Surface struct {
 	NotificationColor termbox.Attribute
 
 	channelClosed bool
+
+        hintCount int
 }
 
 // New returns pointer to a new Surface instance
 func New(b *board.Board, s *solver.Solver, n *notification.Notification) *Surface {
 	scorer := score.New()
-	sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer, Message: "Welcome to the game Puzzl!", Notifier: n, NotificationColor: termbox.ColorCyan}
+	sf := &Surface{gameBoard: b, gameSolver: s, scorer: scorer, Message: notification.WelcomeMessage, Notifier: n, NotificationColor: termbox.ColorCyan, hintCount: 3}
 
 	sf.initiate()
 
@@ -101,6 +103,9 @@ func (s *Surface) drawWall(x, y int, isLeft bool) {
 }
 
 func (s *Surface) drawScore(x, y int) {
+	termbox.SetCell(x+21, y, blank, termbox.ColorDefault, termbox.ColorCyan)
+	termbox.SetCell(x+34, y, blank, termbox.ColorDefault, termbox.ColorCyan)
+
 	// score banner
 	chars := []rune{'G', 'A', 'M', 'E', ' ', 'S', 'C', 'O', 'R', 'E', ' ', ' '}
 	for i := 0; i < 12; i++ {
@@ -264,7 +269,7 @@ func (s *Surface) moveTile(dx, dy int) {
 			// solved by solver
 			s.gameBoard.Move(newX, newY)
 
-			// updates the total game moves played yet
+			// updates the total game moves played till now
 			s.scorer.TotalMoves++
 
 			// right move by player
@@ -317,6 +322,7 @@ func (s *Surface) moveTile(dx, dy int) {
 				// NOTIFICATION COLOR -> CYAN
 				s.NotificationColor = termbox.ColorCyan
 
+                                // update game status, close notification channel
 				close(s.Notifier.Tunnel)
 				s.channelClosed = true
 			}
@@ -343,6 +349,40 @@ func (s *Surface) moveTile(dx, dy int) {
 	}
 }
 
+func (s *Surface) showHint() {
+  if (s.gameSolver.Solved && s.hintCount > 0) {
+    present := s.gameBoard
+    presentRow, presentCol := present.BlankRow, present.BlankCol
+
+    future := s.currentBoard.Value.(board.Board)
+    futureRow, futureCol := future.BlankRow, future.BlankCol
+
+    var direction string
+
+    if (futureRow > presentRow) {
+      direction = "down"
+    } else if (futureRow < presentRow){
+      direction = "up"
+    } else if (futureCol > presentCol) {
+      direction = "right"
+    } else if (futureCol < presentCol) {
+      direction = "left"
+    }
+
+    s.NotificationColor = termbox.ColorCyan
+    s.hintCount--
+    s.Message = fmt.Sprintf("Hint #%v - move %v side", 3-s.hintCount, direction)
+  } else if (s.gameSolver.Solved && s.hintCount <= 0) {
+    s.NotificationColor = termbox.ColorRed
+    s.Message = "No more hints my friend."
+  } else {
+    s.NotificationColor = termbox.ColorYellow
+    s.Message = notification.WaitMessage
+  }
+
+  s.drawBoard()
+}
+
 func (s *Surface) initiate() {
 
 	go func() {
@@ -350,6 +390,8 @@ func (s *Surface) initiate() {
 			// updates the solvable moves count for the game
 			// it fixes the issue where game wasn't showing it in the starting
 			s.solvableMoves = s.gameSolver.Path.Len()
+
+                        s.currentBoard = s.gameSolver.Path.Front()
 
 			s.Message = e
 			s.drawBoard()
@@ -387,6 +429,13 @@ GameLoop:
 			case termbox.KeyArrowRight:
 				s.decideAction(0, 1)
 			}
+
+                        switch ev.Ch {
+                        case 'h':
+                                s.showHint()
+                        case 'H':
+                                s.showHint()
+                        }
 
 		case termbox.EventError:
 			panic(ev.Err)
