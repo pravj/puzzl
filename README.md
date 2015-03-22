@@ -13,7 +13,11 @@ puzzl comes with an in-built solver which can solve any puzzle configuration fas
 
 ![puzzl](https://github.com/pravj/puzzl/blob/development/puzzl.gif?raw=true)
 
-####Installtion
+I have also written a paper\* describing technical details about the game, have a look, in case you want to.
+
+[Implementing an intelligent version of the classical sliding-puzzle game for unix terminals using Golang's concurrency primitives](https://github.com/pravj/puzzl-paper/blob/master/puzzl.pdf)
+
+####Installation
 ```go
 go get github.com/pravj/puzzl
 ```
