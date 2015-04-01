@@ -15,7 +15,9 @@ puzzl comes with an in-built solver which can solve any puzzle configuration fas
 
 I have also written a paper\* describing technical details about the game, have a look, in case you want to.
 
-[Implementing an intelligent version of the classical sliding-puzzle game for unix terminals using Golang's concurrency primitives](https://github.com/pravj/puzzl-paper/blob/master/puzzl.pdf)
+> Implementing an intelligent version of the classical sliding-puzzle game for unix terminals using Golang's concurrency primitives
+>
+> http://arxiv.org/abs/1503.08345
 
 ####Installation
 ```go
